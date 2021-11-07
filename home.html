@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brasileirao</title>
+    <script src="echarts.js"></script>
+    <script src="jquery.js"></script>
+</head>
+<body>
+    <div id="main" style="width: 1320px;height:620px;"></div>
+    <script type="text/javascript">
+
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        $.get(
+            'sbrasileirao.json',
+            function (_rawData) {
+                run(_rawData);
+        }
+        );
+
+        function run(_rawData) {      
+            const times = [
+            'Fortaleza', 'Athlético-PR', 'Coritiba', 'Internacional',
+            'Sport', 'Ceará', 'Flamengo', 'Atlético-MG', 'Santos',
+            'Bragantino', 'Grêmio', 'Fluminense', 'Botafogo-RJ', 'Bahia',
+            'Corinthians', 'Atlético-GO', 'Goiás', 'São Paulo', 'Palmeiras',
+            'Vasco'    
+            ];
+
+        const datasetWithFilters = [];
+        const seriesList = [];
+        echarts.util.each(times, function (time) {
+            var datasetId = 'dataset_' + time;
+            datasetWithFilters.push({
+            id: datasetId,
+            fromDatasetId: 'dataset_raw',
+            transform: {
+                type: 'filter',
+                config: {
+                and: [
+                    { dimension: 'Rodada', gte: 1 },
+                    { dimension: 'Time', '=': time }
+                ]
+                }
+            }
+            });
+            seriesList.push({
+                type: 'line',
+                datasetId: datasetId,
+                showSymbol: false,
+                name: time,
+                endLabel: {
+                    show: true,
+                    formatter: function (params) {
+                        return params.value[2] + ': ' + params.value[4];
+                        }
+            },
+                labelLayout: {
+                    moveOverlap: 'shiftY'
+                    },
+                emphasis: {
+                    focus: 'series'
+                },
+                encode: {
+                    x: 'Rodada',
+                    y: 'PontosAcum',
+                    label: ['time', 'PontosAcum'],
+                    itemName: 'Ano',
+                    tooltip: ['PontosAcum']
+                }
+            });
+        });
+        option = {
+            animationDuration: 10000,
+            dataset: [
+            {
+                id: 'dataset_raw',
+                source: _rawData
+            },
+            ...datasetWithFilters
+            ],
+            title: {
+            text: 'Show do Brasileirão'
+            },
+            tooltip: {
+            order: 'valueDesc',
+            trigger: 'axis'
+            },
+            xAxis: {
+            name: 'Rodada',
+            type: 'category',
+            nameLocation: 'middle'
+            },
+            yAxis: {
+            name: 'Pontos Acumulados'
+            },
+            grid: {
+            right: 140
+            },
+            series: seriesList
+        };
+        myChart.setOption(option);
+        }
+
+        option && myChart.setOption(option);
+
+    </script>
+</body>
+</html>
